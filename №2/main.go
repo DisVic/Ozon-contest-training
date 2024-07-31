@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 )
 
 func main() {
@@ -25,23 +26,23 @@ func main() {
 }
 
 func roundSum(n, p int) float64 {
+	var resultFloat, result float64
 	var resultInt int
-	var resultFloat float64
+	mu := new(sync.Mutex)
 	for i := 0; i < n; i++ {
-		func(p *int) {
-			var number int
-			var err error
-			_, err = fmt.Scan(&number)
-			if err != nil {
-				fmt.Println("не целое число!")
-				return
-			}
-			resultInt += int(float64(number) * float64(*p) / 100)
-
-			resultFloat += float64(number) * float64(*p) / 100
-
+		var number int
+		var err error
+		_, err = fmt.Scan(&number)
+		if err != nil {
+			panic("не целое число!")
+		}
+		go func(p *int) {
+			mu.Lock()
+			resultInt = int(float64(number) * float64(*p) / 100)
+			resultFloat = float64(number) * float64(*p) / 100
+			result += resultFloat - float64(resultInt)
+			mu.Unlock()
 		}(&p)
-		fmt.Println(resultFloat)
 	}
-	return resultFloat - float64(resultInt)
+	return result
 }
